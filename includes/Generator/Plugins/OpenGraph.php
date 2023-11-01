@@ -182,16 +182,18 @@ class OpenGraph extends AbstractBaseGenerator implements GeneratorInterface {
 			$extractedDesc = $this->outputPage->getHTML();
 			$extractedDesc = stristr($extractedDesc, '<div class="mw-parser-output">');
 
-			$extractedDesc = self::extractFirstNonEmptyNonNestedParagraph($extractedDesc);
+			if (is_string($extractedDesc)) {
+				$extractedDesc = self::extractFirstNonEmptyNonNestedParagraph($extractedDesc);
 
-			$this->outputPage->addHeadItem(
-				$convertedTag, Html::element(
-					'meta', [
-						self::$htmlElementPropertyKey => $convertedTag,
-						self::$htmlElementContentKey => $extractedDesc,
-					]
-				)
-			);
+				$this->outputPage->addHeadItem(
+					$convertedTag, Html::element(
+						'meta', [
+							self::$htmlElementPropertyKey => $convertedTag,
+							self::$htmlElementContentKey => $extractedDesc,
+						]
+					)
+				);
+			}
 		}
 	}
 
