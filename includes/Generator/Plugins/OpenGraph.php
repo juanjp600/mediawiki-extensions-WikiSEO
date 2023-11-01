@@ -172,7 +172,55 @@ class OpenGraph extends AbstractBaseGenerator implements GeneratorInterface {
 				);
 			}
 		}
+
+		if ( !array_key_exists( 'description', $this->metadata ) ) {
+			$convertedTag = $this->conversions['description'];
+
+			//kludge to extract the first readable paragraph,
+			//which is presumably going to be a usable summary
+			//of the contents of the article
+			$extractedDesc = $this->outputPage->getHTML();
+			$extractedDesc = stristr($extractedDesc, '<div class="mw-parser-output">');
+
+			$extractedDesc = self::extractFirstNonEmptyNonNestedParagraph($extractedDesc);
+
+			$this->outputPage->addHeadItem(
+				$convertedTag, Html::element(
+					'meta', [
+						self::$htmlElementPropertyKey => $convertedTag,
+						self::$htmlElementContentKey => $extractedDesc,
+					]
+				)
+			);
+		}
 	}
+
+	private static function isNullOrEmptyString($str): bool{
+		return (!isset($str) || trim($str) === '');
+	}
+
+	private static function extractFirstNonEmptyNonNestedParagraph($str): string{
+		$nestDepth = 0;
+		for ($i = 0;$i<strlen($str)-4;$i++) {
+			if (substr($str, $i, 4)=='<br>') {
+				//do nothing
+			} else if (substr($str, $i, 2)=='</' || substr($str, $i, 2)=='/>') {
+				$nestDepth--;
+			} else if (substr($str, $i, 1)=='<') {
+				$nestDepth++;
+				if ($nestDepth == 2 && substr($str, $i, 3)=="<p>") {
+					$result = substr($str, $i+3);
+					$result = stristr($result, "</p>", true);
+					$result = trim(strip_tags($result));
+					if (!self::isNullOrEmptyString($result)) {
+						return $result;
+					}
+				}
+			}
+		}
+		return "";
+	}
+
 
 	/**
 	 * @inheritDoc
